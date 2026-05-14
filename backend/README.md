@@ -1,115 +1,161 @@
-# REGS - A Modern Online Judge System
+﻿# REGS Backend
 
-**REGS** 是一個現代化的線上評測系統（Online Judge），專為跨平台使用、自動化處理與環境隔離而設計。本系統結合了 **Docker 容器技術** 與 **CMake/Ninja 編譯工具鏈**，確保使用者提交的程式碼在完全隔離的沙盒環境中運行，並提供即時的評測結果與多階段日誌查詢。
-
----
-
-## 核心功能
-
-*   **自動化編譯管線**：支援 `.zip` 格式上傳，自動執行 CMake 配置與 Ninja 編譯。
-*   **環境隔離與安全**：所有編譯與執行階段均在 Docker 容器內完成，並使用 `--network none` 實施完全斷網隔離。
-*   **非同步評測隊列**：系統接收提交後立即回傳 `operatorId`，評測邏輯在背景透過 Job Queue 執行，確保 API 高響應性。
-*   **多維度狀態判定**： **AC** (Accepted), **WA** (Wrong Answer), **CE** (Compile Error), **RE** (Runtime Error), **SE** (Setup Error) 與 **TLE** (Time Limit Exceeded)。
-*   **分層權限管理 (RBAC)**：定義了 `Admin`, `User` 與 `Guest` 三種權限角色，並以 ECDSA 簽署的 JWT 進行身份驗證。
-*   **完整的 API 文件**：透過 Swagger UI 提供互動式的 API 文件。
+`backend` 是 REGS 的後端服務，使用 Go + Gin 實作 REST API、JWT 認證、PostgreSQL 資料庫與 Docker 隔離評測流程。
 
 ---
 
-## 技術使用
+## 主要功能
 
-*   **後端**: Go, Gin
-*   **資料庫**: PostgreSQL, GORM
-*   **容器化**: Docker
-*   **編譯工具**: CMake, Ninja
-*   **API 文件**: Swagger
-
----
-
-## 快速開始
-
-### 1. 環境準備
-
-*   安裝 Go (建議版本 1.22 或以上)。
-*   安裝 Docker。
-
-### 2. 啟動步驟
-
-1.  **啟動資料庫**
-    在專案根目錄執行以下指令，背景啟動 PostgreSQL 服務。
-    ```bash
-    docker-compose up -d
-    ```
-
-2.  **建立管理員帳號 (首次執行)**
-    執行根目錄的 `Create-Admin.bat`。此腳本將會引導您建立第一位管理員帳號。
-    ```bash
-    .\Create-Admin.bat
-    ```
-
-3.  **啟動後端伺服器**
-    執行根目錄的 `Server.bat` 來編譯並啟動後端服務。
-    ```bash
-    .\Server.bat
-    ```
-
-4.  **訪問服務**
-    *   **API 服務**: `http://localhost:8081`
-    *   **API 文件**: `http://localhost:8081/swagger/index.html`
+- 使用者註冊、登入、登出、JWT 驗證
+- 題目管理與題目查詢
+- 提交 `.zip` 程式碼並進行非同步評測
+- 查詢提交結果、原始專案與分階段日誌
+- 管理員題目與測資上傳、刪除
+- Swagger API 文件
 
 ---
 
-## API 文件與測試
+## 環境需求
 
-### 查看 API 文件
+- Go
+- Docker
+- `docker compose`
+- `openssl` (若重新生成 JWT 金鑰時使用)
 
-在伺服器啟動後，您可以透過瀏覽器訪問以下網址來查看完整的互動式 API 文件：
+---
 
-*   [http://localhost:8081/swagger/index.html](http://localhost:8081/swagger/index.html)
+## 快速啟動
 
-### 測試 API
+### 1. 啟動資料庫
 
-1.  在 API 文件頁面中，點開您想測試的任何一個 API 端點。
-2.  點擊右上角的 **"Try it out"** 按鈕。
-3.  填寫必要的參數（例如，請求內文、路徑參數）。
-4.  對於需要授權的 API，請先透過 `/api/users/login` 取得 `token`，然後點擊頁面右上角的 **"Authorize"** 按鈕，在彈出的視窗中輸入 `Bearer <您的token>`。
-5.  點擊 **"Execute"** 按鈕即可發送請求並查看回應。
+在 `backend` 目錄中執行：
+
+```bat
+docker compose up -d
+```
+
+此命令會啟動 PostgreSQL 容器，並將內部 `5432` 映射到 `localhost:5433`。
+
+### 2. 檢查或生成 JWT 金鑰
+
+```bash
+openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out private.pem
+openssl pkey -in private.pem -pubout -out public.pem
+```
+
+### 3. 建立管理員帳號
+
+在 `backend` 目錄中執行：
+
+```bat
+scripts\register_admin.bat
+```
+
+### 4. 啟動後端伺服器
+
+執行：
+
+```bat
+start_backend.bat
+```
+
+此腳本會：
+
+- 檢查 Docker 容器是否已啟動
+- 編譯 `cmd/server` 並產生 `server.exe`
+- 啟動後端伺服器
+
+若你希望直接執行，也可以：
+
+```bat
+go run ./cmd/server
+```
+
+### 5. 服務位置
+
+- API: `http://localhost:8081`
+- Swagger 文件: `http://localhost:8081/swagger/index.html`
+
+---
+
+## 重要 API 路由
+
+### 公開路由
+
+- `POST /api/users/register`
+- `POST /api/users/login`
+- `GET /api/problems`
+- `GET /api/problems/:id`
+- `GET /api/problems/:id/examples`
+- `GET /api/users/:user_id/submissions`
+- `GET /api/stats/problems/:problem_id`
+- `GET /api/stats/users/:user_id`
+
+### 需要驗證的路由
+
+- `POST /api/users/logout`
+- `GET /api/users/me`
+- `POST /api/submissions`
+- `GET /api/submissions`
+- `GET /api/submissions/:operatorId`
+- `GET /api/submissions/:operatorId/source`
+- `GET /api/submissions/:operatorId/logs/:type`
+
+### 管理員專用路由
+
+- `PUT /api/problems`
+- `GET /api/problems/:id/testcases`
+- `POST /api/problems/:id/testdata`
+- `DELETE /api/problems/:id`
+
+> 後端採用 `Authorization: Bearer <token>`，並以 JWT 進行權限驗證。
 
 ---
 
 ## 輔助腳本
 
-專案的script目錄中包含了方便開發的工具：
+`backend/scripts` 目錄包含：
 
-*   `create_admin.bat`: 建立管理員帳號。
-*   `reset_database.bat`: **(危險操作)** 徹底清空資料庫，用於開發和測試。執行前會要求確認。
+- `register_admin.bat`：建立管理員帳號
+- `reset_database.bat`：**(危險操作)** 重設 PostgreSQL 資料庫
 
 ---
 
 ## 專案結構
 
 ```
-regs-backend/
-├── cmd/                # 應用程式進入點
-│   ├── server/         # Web 伺服器主程式
-│   └── seed/           # 建立管理員的獨立工具
-├── docs/               # Swagger API 文件
-├── internal/           # 內部套件 (不應被外部引用)
-│   ├── api/            # API 處理邏輯 (handlers, middleware)
-│   ├── database/       # 資料庫連線與遷移
-│   ├── judge/          # 核心評測沙盒邏輯
+backend/
+├── cmd/
+│   ├── server/         # Web 伺服器啟動程式
+│   └── seed/           # 建立管理員帳號的工具
+├── docs/               # Swagger/OpenAPI 文件
+├── internal/
+│   ├── api/            # HTTP handlers 與 middleware
+│   ├── database/       # PostgreSQL 連線與 auto-migrate
+│   ├── judge/          # 評測沙盒與 judge worker
 │   └── models/         # GORM 資料模型
-├── pkg/                # 可被外部引用的公共套件
-│   ├── jwt/            # JWT 產生與驗證
-│   └── utils/          # 通用工具函式 (如解壓縮)
-├── storage/            # 執行期間生成的檔案 (submissions, workspaces)
+├── pkg/
+│   ├── jwt/            # JWT 生成與驗證
+│   └── utils/          # 通用工具函式
+├── scripts/            # 管理員註冊、重設資料庫等腳本
+├── storage/            # 執行期間生成檔案
 ├── testdata/           # 題目測資
-├── Server.bat          # 啟動伺服器腳本
-├── docker-compose.yml  # Docker 服務編排
-└── go.mod              # Go 模組定義
+├── docker-compose.yml  # PostgreSQL 容器設定
+├── start_backend.bat   # 後端啟動腳本
+├── private.pem         # JWT 私鑰
+├── public.pem          # JWT 公鑰
+└── go.mod
 ```
+
+---
+
+## 其他注意事項
+
+- `backend/cmd/server/main.go` 會初始化 3 個 judge worker：`handlers.InitJudger(3)`。
+- CORS 允許來源為 `http://localhost:5173`，對應前端預設位置。
 
 ---
 
 ## 授權
 
-本專案為 NTUST CS3060701 課程期末專案，相關內容遵循學術誠信規範。
+本專案為 NTUST CS3060701 課程期末專案，請遵守學術誠信規範。
