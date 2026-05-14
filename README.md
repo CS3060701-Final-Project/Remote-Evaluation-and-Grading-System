@@ -14,7 +14,7 @@
 - Docker 隔離編譯與執行，提升安全性
 - Swagger API 文件與互動式測試頁面
 
-## 技術棧
+## 技術使用
 
 - 後端：Go + Gin
 - 資料庫：PostgreSQL + GORM
@@ -22,33 +22,6 @@
 - 編譯工具：CMake + Ninja
 - 認證方式：JWT (ECDSA token)
 - Docker：PostgreSQL 容器與評測隔離環境
-
-## 專案結構
-
-```
-REGS-Backend/
-├── backend/                 # Go 後端服務
-│   ├── cmd/                 # 服務與種子資料程式入口
-│   ├── internal/            # 後端內部實作
-│   │   ├── api/             # HTTP handlers 與 middleware
-│   │   ├── database/        # PostgreSQL 連線與 AutoMigrate
-│   │   ├── judge/           # 評測沙盒與執行邏輯
-│   │   └── models/          # GORM 資料模型
-│   ├── docs/                # Swagger / OpenAPI 定義
-│   ├── pkg/                 # 可重用套件（JWT、工具等）
-│   ├── scripts/             # 管理員註冊、重設資料庫等輔助腳本
-│   ├── docker-compose.yml   # Postgres 容器編排
-│   └── go.mod               # Go 模組
-├── frontend/                # React 前端應用
-│   ├── public/
-│   ├── src/
-│   ├── package.json
-│   └── README.md
-├── start_all.bat            # 一鍵啟動 backend + frontend (Windows)
-├── data1.md                 # 題目測試架構說明
-├── data2.md                 # 期末專案設計說明
-└── README.md                # 本檔案
-```
 
 ## 快速啟動
 
@@ -120,8 +93,6 @@ start_all.bat
 - `backend`：執行 `go run ./cmd/server`
 - `frontend`：執行 `npm run dev`
 
----
-
 ## API 文件
 
 後端啟動後，請開啟：
@@ -147,7 +118,6 @@ start_all.bat
 
 > 需要授權的請求請帶入 `Authorization: Bearer <token>`。
 
----
 
 ## 使用者角色與權限
 
@@ -155,19 +125,6 @@ start_all.bat
 - `User`: 可註冊、登入、提交程式、查看自己的提交紀錄
 - `Admin`: 具備題目管理與測資上傳權限
 
-## JWT 密鑰生成
-
-後端使用 ECDSA JWT 簽署機制，若您需要重新生成金鑰，可於 `backend` 目錄執行：
-
-```bash
-openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out private.pem
-openssl pkey -in private.pem -pubout -out public.pem
-```
-
-- `private.pem`：用於簽發 JWT token
-- `public.pem`：用於驗證 JWT token
-
-請確保這兩個檔案放在後端可讀取的位置，並與後端設定相符。
 
 ## 重要檔案與資料夾
 
@@ -181,6 +138,7 @@ openssl pkey -in private.pem -pubout -out public.pem
 - `backend/docs/swagger.yaml`：Swagger 文件定義
 - `frontend/src/`：React 前端程式碼
 - `frontend/.env.example`：前端 API 基本設定範本
+
 
 ## 開發與測試注意事項
 

@@ -2,8 +2,6 @@
 
 `backend` 是 REGS 的後端服務，使用 Go + Gin 實作 REST API、JWT 認證、PostgreSQL 資料庫與 Docker 隔離評測流程。
 
----
-
 ## 主要功能
 
 - 使用者註冊、登入、登出、JWT 驗證
@@ -13,16 +11,12 @@
 - 管理員題目與測資上傳、刪除
 - Swagger API 文件
 
----
-
 ## 環境需求
 
 - Go
 - Docker
 - `docker compose`
 - `openssl` (若重新生成 JWT 金鑰時使用)
-
----
 
 ## 快速啟動
 
@@ -76,8 +70,6 @@ go run ./cmd/server
 - API: `http://localhost:8081`
 - Swagger 文件: `http://localhost:8081/swagger/index.html`
 
----
-
 ## 重要 API 路由
 
 ### 公開路由
@@ -110,8 +102,6 @@ go run ./cmd/server
 
 > 後端採用 `Authorization: Bearer <token>`，並以 JWT 進行權限驗證。
 
----
-
 ## 輔助腳本
 
 `backend/scripts` 目錄包含：
@@ -119,42 +109,11 @@ go run ./cmd/server
 - `register_admin.bat`：建立管理員帳號
 - `reset_database.bat`：**(危險操作)** 重設 PostgreSQL 資料庫
 
----
-
-## 專案結構
-
-```
-backend/
-├── cmd/
-│   ├── server/         # Web 伺服器啟動程式
-│   └── seed/           # 建立管理員帳號的工具
-├── docs/               # Swagger/OpenAPI 文件
-├── internal/
-│   ├── api/            # HTTP handlers 與 middleware
-│   ├── database/       # PostgreSQL 連線與 auto-migrate
-│   ├── judge/          # 評測沙盒與 judge worker
-│   └── models/         # GORM 資料模型
-├── pkg/
-│   ├── jwt/            # JWT 生成與驗證
-│   └── utils/          # 通用工具函式
-├── scripts/            # 管理員註冊、重設資料庫等腳本
-├── storage/            # 執行期間生成檔案
-├── testdata/           # 題目測資
-├── docker-compose.yml  # PostgreSQL 容器設定
-├── start_backend.bat   # 後端啟動腳本
-├── private.pem         # JWT 私鑰
-├── public.pem          # JWT 公鑰
-└── go.mod
-```
-
----
 
 ## 其他注意事項
 
 - `backend/cmd/server/main.go` 會初始化 3 個 judge worker：`handlers.InitJudger(3)`。
 - CORS 允許來源為 `http://localhost:5173`，對應前端預設位置。
-
----
 
 ## 授權
 
